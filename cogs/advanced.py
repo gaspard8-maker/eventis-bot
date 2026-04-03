@@ -24,15 +24,26 @@ class Advanced(commands.Cog):
     @app_commands.checks.has_permissions(administrator=True)
     async def webhook(self, interaction: discord.Interaction,
                       source: discord.TextChannel,
-                      destination: discord.TextChannel):
+                      dest: discord.TextChannel,
+                      dest2: discord.TextChannel = None,
+                      dest3: discord.TextChannel = None,
+                      mention_role: discord.Role = None,
+                      include_payment_link: bool = False,
+                      show_public_info: bool = False,
+                      expire_minutes: int = 0):
         data = db.load(interaction.guild_id)
-        relays = data.setdefault("webhook_relays", {})
-        relays.setdefault(str(source.id), [])
-        if destination.id not in relays[str(source.id)]:
-            relays[str(source.id)].append(destination.id)
+        destinations = [d.id for d in [dest, dest2, dest3] if d]
+        data.setdefault("webhook_relays", {})[str(source.id)] = destinations
+        data.setdefault("webhook_options", {})[str(source.id)] = {
+            "mention_role": mention_role.id if mention_role else None,
+            "include_payment_link": include_payment_link,
+            "show_public_info": show_public_info,
+            "expire_minutes": expire_minutes,
+        }
         db.save(interaction.guild_id, data)
+        dests_mentions = " + ".join([d.mention for d in [dest, dest2, dest3] if d])
         await interaction.response.send_message(
-            f"✅ Relais : {source.mention} → {destination.mention}", ephemeral=True
+            f"✅ Relais : {source.mention} → {dests_mentions}", ephemeral=True
         )
 
     @app_commands.command(name="webhook_stop", description="Arrêter la redirection d'un salon")
@@ -52,11 +63,11 @@ class Advanced(commands.Cog):
     @app_commands.command(name="webhook_pasfixed", description="Définir un PAS fixé (€/place) pour un salon source")
     @app_commands.checks.has_permissions(administrator=True)
     async def webhook_pasfixed(self, interaction: discord.Interaction,
-                                source: discord.TextChannel, pas: float):
+                                source: discord.TextChannel, euros_par_place: float):
         data = db.load(interaction.guild_id)
-        data.setdefault("webhook_pas", {})[str(source.id)] = {"mode": "fixed", "value": pas}
+        data.setdefault("webhook_pas", {})[str(source.id)] = {"mode": "fixed", "value": euros_par_place}
         db.save(interaction.guild_id, data)
-        await interaction.response.send_message(f"✅ PAS fixé à **{pas}€** pour {source.mention}.", ephemeral=True)
+        await interaction.response.send_message(f"✅ PAS fixé à **{euros_par_place}€** pour {source.mention}.", ephemeral=True)
 
     @app_commands.command(name="webhook_pasmap", description="Définir la table PAS par catégories (mode 'map')")
     @app_commands.checks.has_permissions(administrator=True)
