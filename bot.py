@@ -5,7 +5,7 @@ import json
 import asyncio
 
 # ── Configuration ──────────────────────────────────────────────
-BOT_TOKEN = os.getenv ("MTQ4OTYwNzY1MzA1ODY3ODgyNA.G809xx.TqwDpKe_n6Tz7CljEq776F0hYaBeMQ8exXsQ3I")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID   = 0  # Remplace par ton Discord user ID
 
 intents = discord.Intents.all()
